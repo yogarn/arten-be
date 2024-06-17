@@ -1,10 +1,14 @@
 package service
 
 import (
+	"errors"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/yogarn/arten/entity"
 	"github.com/yogarn/arten/internal/repository"
+	"github.com/yogarn/arten/pkg/deepl"
 )
 
 type ITranslationService interface {
@@ -28,6 +32,21 @@ func (translationService *TranslationService) CreateTranslation(ctx *gin.Context
 	if translation.Id == uuid.Nil {
 		translation.Id = uuid.New()
 	}
+
+	if translation.OriginLanguage == "" && translation.TargetLanguage == "" && translation.Word == "" {
+		return errors.New("missing required fields")
+	}
+
+	translation.CreatedAt = time.Now()
+	translation.UpdatedAt = time.Now()
+
+	translationResponse, err := deepl.Translate(translation.Word, translation.OriginLanguage, translation.TargetLanguage)
+	if err != nil {
+		return err
+	}
+
+	translation.Translate = translationResponse.Translations[0].Text
+
 	return translationService.TranslationRepository.CreateTranslation(translation)
 }
 
