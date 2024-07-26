@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/yogarn/arten/internal/handler/websocket"
 	"github.com/yogarn/arten/internal/service"
 	"github.com/yogarn/arten/pkg/response"
@@ -35,15 +36,18 @@ func MountTranslation(routerGroup *gin.RouterGroup, rest *Rest) {
 }
 
 func MountWebsocket(routerGroup *gin.RouterGroup, rest *Rest) {
-	websocket := routerGroup.Group("/websocket")
-	websocket.GET("/", func(c *gin.Context) {
-		rest.wsManager.HandleConnections(c.Writer, c.Request)
+	websocketGroup := routerGroup.Group("/websocket")
+	websocketGroup.GET("/:chatId", func(c *gin.Context) {
+		chatId, err := uuid.Parse(c.Param("chatId"))
+		if err != nil {
+			response.Error(c, http.StatusBadRequest, "invalid chat ID", err)
+			return
+		}
+		rest.wsManager.HandleConnections(chatId, c.Writer, c.Request)
 	})
 }
 
 func (rest *Rest) MountEndpoints() {
-	go rest.wsManager.HandleMessages()
-
 	rest.router.NoRoute(func(ctx *gin.Context) {
 		response.Error(ctx, http.StatusNotFound, "not found", errors.New("page not found"))
 	})

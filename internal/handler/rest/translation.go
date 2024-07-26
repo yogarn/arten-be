@@ -21,7 +21,8 @@ func (rest *Rest) CreateTranslation(ctx *gin.Context) {
 		return
 	}
 
-	rest.wsManager.Broadcast([]byte(translation.Translate))
+	chatId := translation.ChatId
+	rest.wsManager.Broadcast(chatId, []byte(translation.Translate))
 
 	response.Success(ctx, http.StatusCreated, "Translation created", translation)
 }
@@ -60,7 +61,8 @@ func (rest *Rest) UpdateTranslation(ctx *gin.Context) {
 		return
 	}
 
-	rest.wsManager.Broadcast([]byte(translation.Translate))
+	chatId := translation.ChatId
+	rest.wsManager.Broadcast(chatId, []byte(translation.Translate))
 
 	response.Success(ctx, http.StatusOK, "Translation updated", translation)
 }
