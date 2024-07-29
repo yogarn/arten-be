@@ -23,3 +23,8 @@ type UpdateUser struct {
 	Password string `json:"password" binding:"omitempty,min=8"`
 	Email    string `json:"email" binding:"omitempty,email"`
 }
+
+type OtpRequest struct {
+	Username string `json:"username"`
+	Otp      string `json:"otp"`
+}

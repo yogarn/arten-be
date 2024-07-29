@@ -8,6 +8,7 @@ import (
 	"github.com/yogarn/arten/pkg/bcrypt"
 	"github.com/yogarn/arten/pkg/config"
 	"github.com/yogarn/arten/pkg/database/mysql"
+	"github.com/yogarn/arten/pkg/database/redis"
 	"github.com/yogarn/arten/pkg/jwt"
 	"github.com/yogarn/arten/pkg/middleware"
 )
@@ -17,12 +18,15 @@ func main() {
 	db := mysql.ConnectDatabase()
 	defer db.Close()
 
+	redis := redis.NewRedisClient()
+	defer redis.Close()
+
 	wsManager := websocket.NewWebSocketManager()
 
 	jwt := jwt.Init()
 	bcrypt := bcrypt.Init()
 
-	repository := repository.NewRepository(db)
+	repository := repository.NewRepository(db, redis)
 	service := service.NewService(repository, bcrypt, jwt)
 	middleware := middleware.Init(jwt, service)
 	rest := rest.NewRest(service, wsManager, middleware, jwt, bcrypt)

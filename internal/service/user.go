@@ -15,6 +15,8 @@ type IUserService interface {
 	Login(userReq *model.UserLogin) (*model.UserLoginResponse, error)
 	GetUserById(id uuid.UUID) (*entity.User, error)
 	UpdateUser(ctx *gin.Context, user *model.UpdateUser) (*model.UpdateUser, error)
+	SendOtp(username string) error
+	ActivateUser(otpRequest *model.OtpRequest) error
 }
 
 type UserService struct {
@@ -102,4 +104,26 @@ func (userService *UserService) UpdateUser(ctx *gin.Context, userReq *model.Upda
 		return nil, err
 	}
 	return result, nil
+}
+
+func (userService *UserService) SendOtp(username string) error {
+	err := userService.UserRepository.SendOtp(username)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (userService *UserService) ActivateUser(otpRequest *model.OtpRequest) error {
+	err := userService.UserRepository.CheckOtp(otpRequest)
+	if err != nil {
+		return err
+	}
+
+	err = userService.UserRepository.ActivateUser(otpRequest.Username)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
