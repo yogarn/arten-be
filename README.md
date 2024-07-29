@@ -6,6 +6,7 @@ Arten is a realtime voice recognition and AI based translation application using
 - MySQL
 - DeepL
 - Gorilla Websocket
+- Redis
 
 ## Others
 Front-end Repository: https://github.com/meouz/arten-fe  
