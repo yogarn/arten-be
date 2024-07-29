@@ -14,3 +14,7 @@ func LoadDataSourceName() string {
 		os.Getenv("DB_NAME"),
 	)
 }
+
+func LoadRedisCredentials() (string, string) {
+	return os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASSWORD")
+}
