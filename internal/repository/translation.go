@@ -26,8 +26,8 @@ func NewTranslationRepository(db *sql.DB) ITranslationRepository {
 
 func (translationRepository *TranslationRepository) CreateTranslation(translation *entity.Translation) error {
 	stmt := `
-		INSERT INTO translations (id, origin_language, target_language, word, translate, updated_at, created_at) 
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO translations (id, user_id, origin_language, target_language, word, translate, updated_at, created_at) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	tx, err := translationRepository.db.Begin()
@@ -35,7 +35,7 @@ func (translationRepository *TranslationRepository) CreateTranslation(translatio
 		return fmt.Errorf("begin transaction: %v", err)
 	}
 
-	_, err = tx.Exec(stmt, translation.Id, translation.OriginLanguage, translation.TargetLanguage, translation.Word, translation.Translate, translation.UpdatedAt, translation.CreatedAt)
+	_, err = tx.Exec(stmt, translation.Id, translation.UserId, translation.OriginLanguage, translation.TargetLanguage, translation.Word, translation.Translate, translation.UpdatedAt, translation.CreatedAt)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("exec statement: %v", err)
@@ -51,14 +51,14 @@ func (translationRepository *TranslationRepository) CreateTranslation(translatio
 
 func (translationRepository *TranslationRepository) GetTranslation(id uuid.UUID) (*entity.Translation, error) {
 	stmt := `
-		SELECT id, origin_language, target_language, word, translate, updated_at, created_at
+		SELECT id, user_id, origin_language, target_language, word, translate, updated_at, created_at
 		FROM translations
 		WHERE id = ?
 	`
 
 	row := translationRepository.db.QueryRow(stmt, id)
 	translation := &entity.Translation{}
-	err := row.Scan(&translation.Id, &translation.OriginLanguage, &translation.TargetLanguage, &translation.Word, &translation.Translate, &translation.UpdatedAt, &translation.CreatedAt)
+	err := row.Scan(&translation.Id, &translation.UserId, &translation.OriginLanguage, &translation.TargetLanguage, &translation.Word, &translation.Translate, &translation.UpdatedAt, &translation.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("no record found")

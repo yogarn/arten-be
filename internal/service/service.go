@@ -13,7 +13,7 @@ type Service struct {
 
 func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwt jwt.Interface) *Service {
 	return &Service{
-		TranslationService: NewTranslationService(repository.TranslationRepository),
+		TranslationService: NewTranslationService(repository.TranslationRepository, jwt),
 		UserService:        NewUserService(repository.UserRepository, bcrypt, jwt),
 	}
 }

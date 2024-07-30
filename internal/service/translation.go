@@ -9,6 +9,7 @@ import (
 	"github.com/yogarn/arten/entity"
 	"github.com/yogarn/arten/internal/repository"
 	"github.com/yogarn/arten/pkg/deepl"
+	"github.com/yogarn/arten/pkg/jwt"
 )
 
 type ITranslationService interface {
@@ -20,11 +21,13 @@ type ITranslationService interface {
 
 type TranslationService struct {
 	TranslationRepository repository.ITranslationRepository
+	JWT                   jwt.Interface
 }
 
-func NewTranslationService(translationRepository repository.ITranslationRepository) ITranslationService {
+func NewTranslationService(translationRepository repository.ITranslationRepository, jwt jwt.Interface) ITranslationService {
 	return &TranslationService{
 		TranslationRepository: translationRepository,
+		JWT:                   jwt,
 	}
 }
 
@@ -40,6 +43,13 @@ func (translationService *TranslationService) CreateTranslation(ctx *gin.Context
 	translation.CreatedAt = time.Now()
 	translation.UpdatedAt = time.Now()
 
+	userId, err := translationService.JWT.GetLoginUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	translation.UserId = userId
+
 	translationResponse, err := deepl.Translate(translation.Word, translation.OriginLanguage, translation.TargetLanguage)
 	if err != nil {
 		return err
@@ -51,13 +61,26 @@ func (translationService *TranslationService) CreateTranslation(ctx *gin.Context
 }
 
 func (translationService *TranslationService) GetTranslation(ctx *gin.Context, id uuid.UUID) (*entity.Translation, error) {
-	return translationService.TranslationRepository.GetTranslation(id)
+	translation, err := translationService.TranslationRepository.GetTranslation(id)
+	if err != nil {
+		return nil, err
+	}
+	return translation, nil
 }
 
+// NOTE: should be removed in near future, not needed
 func (translationService *TranslationService) UpdateTranslation(ctx *gin.Context, id uuid.UUID, translation *entity.Translation) error {
-	return translationService.TranslationRepository.UpdateTranslation(id, translation)
+	err := translationService.TranslationRepository.UpdateTranslation(id, translation)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (translationService *TranslationService) DeleteTranslation(ctx *gin.Context, id uuid.UUID) error {
-	return translationService.TranslationRepository.DeleteTranslation(id)
+	err := translationService.TranslationRepository.DeleteTranslation(id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
