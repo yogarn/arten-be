@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/yogarn/arten/entity"
@@ -50,6 +52,11 @@ func (userService *UserService) Register(userReq *model.UserRegister) (*entity.U
 	user, err := userService.UserRepository.CreateUser(userEntity)
 	if err != nil {
 		return nil, err
+	}
+
+	err = userService.SendOtp(user.Username)
+	if err != nil {
+		return user, errors.New("failed to send otp, try to resend otp")
 	}
 	return user, nil
 }
