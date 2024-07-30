@@ -79,7 +79,7 @@ func (r *Rest) SendOtp(ctx *gin.Context) {
 
 	err := r.service.UserService.SendOtp(username)
 	if err != nil {
-		response.Error(ctx, http.StatusInternalServerError, "failed to update profile", err)
+		response.Error(ctx, http.StatusInternalServerError, "failed to send otp", err)
 		return
 	}
 
