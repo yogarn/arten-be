@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 	"github.com/yogarn/arten/model"
 	"github.com/yogarn/arten/pkg/bcrypt"
 	"github.com/yogarn/arten/pkg/jwt"
+	"github.com/yogarn/arten/pkg/smtp"
 )
 
 type IUserService interface {
@@ -22,18 +24,18 @@ type IUserService interface {
 }
 
 type UserService struct {
-	UserRepository       repository.IUserRepository
-	Bcrypt               bcrypt.Interface
-	JWT                  jwt.Interface
-	ProfilePictureBucket string
+	UserRepository repository.IUserRepository
+	Bcrypt         bcrypt.Interface
+	JWT            jwt.Interface
+	SMTP           smtp.Interface
 }
 
-func NewUserService(userRepository repository.IUserRepository, bcrypt bcrypt.Interface, jwt jwt.Interface) IUserService {
+func NewUserService(userRepository repository.IUserRepository, bcrypt bcrypt.Interface, jwt jwt.Interface, smtp smtp.Interface) IUserService {
 	return &UserService{
-		UserRepository:       userRepository,
-		Bcrypt:               bcrypt,
-		JWT:                  jwt,
-		ProfilePictureBucket: "profilePicture",
+		UserRepository: userRepository,
+		Bcrypt:         bcrypt,
+		JWT:            jwt,
+		SMTP:           smtp,
 	}
 }
 
@@ -56,7 +58,7 @@ func (userService *UserService) Register(userReq *model.UserRegister) (*entity.U
 
 	err = userService.SendOtp(user.Username)
 	if err != nil {
-		return user, errors.New("failed to send otp, try to resend otp")
+		return user, err
 	}
 	return user, nil
 }
@@ -114,10 +116,21 @@ func (userService *UserService) UpdateUser(ctx *gin.Context, userReq *model.Upda
 }
 
 func (userService *UserService) SendOtp(username string) error {
-	err := userService.UserRepository.SendOtp(username)
+	user, otp, err := userService.UserRepository.SendOtp(username)
 	if err != nil {
-		return err
+		return errors.New("failed to send otp to redis")
 	}
+
+	to := []string{user.Email}
+	subject := "OTP Verification"
+	message := fmt.Sprintf("Hello %s, your OTP is %s", user.Name, otp)
+
+	err = userService.SMTP.SendMail(to, subject, message)
+
+	if err != nil {
+		return errors.New("failed to send otp email")
+	}
+
 	return nil
 }
 

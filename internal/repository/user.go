@@ -20,7 +20,7 @@ type IUserRepository interface {
 	LoginUser(user *model.UserLogin) (*entity.User, error)
 	GetUserById(id uuid.UUID) (*entity.User, error)
 	UpdateUser(id uuid.UUID, userReq *model.UpdateUser) (*model.UpdateUser, error)
-	SendOtp(username string) error
+	SendOtp(username string) (*entity.User, string, error)
 	CheckOtp(otpRequest *model.OtpRequest) error
 	ActivateUser(username string) error
 }
@@ -56,11 +56,11 @@ func (userRepository *UserRepository) CreateUser(user *entity.User) (*entity.Use
 	return user, err
 }
 
-func (userRepository *UserRepository) SendOtp(username string) error {
+func (userRepository *UserRepository) SendOtp(username string) (*entity.User, string, error) {
 	stmt := `SELECT * FROM users WHERE username = ?`
 	tx, err := userRepository.db.Begin()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	user := &entity.User{}
@@ -69,17 +69,18 @@ func (userRepository *UserRepository) SendOtp(username string) error {
 	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.CreatedAt)
 
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	otp := fmt.Sprintf("%04d", rand.Intn(9000)+1000)
 	redisOtp := userRepository.redis.Set(context.Background(), user.Email, otp, 5*time.Minute)
 
 	if redisOtp.Err() != nil {
-		return errors.New("failed to send otp")
+		return nil, "", errors.New("failed to send otp")
+
 	}
 
-	return nil
+	return user, otp, nil
 }
 
 func (userRepository *UserRepository) CheckOtp(otpRequest *model.OtpRequest) error {

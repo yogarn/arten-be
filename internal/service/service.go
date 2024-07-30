@@ -4,6 +4,7 @@ import (
 	"github.com/yogarn/arten/internal/repository"
 	"github.com/yogarn/arten/pkg/bcrypt"
 	"github.com/yogarn/arten/pkg/jwt"
+	"github.com/yogarn/arten/pkg/smtp"
 )
 
 type Service struct {
@@ -11,9 +12,9 @@ type Service struct {
 	UserService        IUserService
 }
 
-func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwt jwt.Interface) *Service {
+func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwt jwt.Interface, smtp smtp.Interface) *Service {
 	return &Service{
 		TranslationService: NewTranslationService(repository.TranslationRepository, jwt),
-		UserService:        NewUserService(repository.UserRepository, bcrypt, jwt),
+		UserService:        NewUserService(repository.UserRepository, bcrypt, jwt, smtp),
 	}
 }
