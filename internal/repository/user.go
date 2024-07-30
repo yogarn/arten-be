@@ -179,7 +179,7 @@ func (userRepository *UserRepository) GetUserById(id uuid.UUID) (*entity.User, e
 	user := &entity.User{}
 
 	row := tx.QueryRow(stmt, id)
-	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.CreatedAt)
+	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.CreatedAt)
 
 	if err != nil {
 		tx.Rollback()
