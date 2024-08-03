@@ -25,9 +25,12 @@ type Rest struct {
 	bcrypt     bcrypt.Interface
 }
 
-func NewRest(service *service.Service, wsManager *websocket.WebSocketManager, middleware middleware.Interface, jwt jwt.Interface, bcrypt bcrypt.Interface) *Rest {
+func NewRest(router *gin.Engine, service *service.Service, wsManager *websocket.WebSocketManager, middleware middleware.Interface, jwt jwt.Interface, bcrypt bcrypt.Interface) *Rest {
+	router.Use(middleware.Logger())
+	router.Use(gin.Recovery())
+
 	return &Rest{
-		router:     gin.Default(),
+		router:     router,
 		service:    service,
 		wsManager:  wsManager,
 		middleware: middleware,

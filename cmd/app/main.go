@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/yogarn/arten/internal/handler/rest"
 	"github.com/yogarn/arten/internal/handler/websocket"
 	"github.com/yogarn/arten/internal/repository"
@@ -32,7 +33,10 @@ func main() {
 	repository := repository.NewRepository(db, redis)
 	service := service.NewService(repository, bcrypt, jwt, smtp)
 	middleware := middleware.Init(jwt, service)
-	rest := rest.NewRest(service, wsManager, middleware, jwt, bcrypt)
+
+	config.SetupLogger()
+	router := gin.New()
+	rest := rest.NewRest(router, service, wsManager, middleware, jwt, bcrypt)
 
 	rest.MountEndpoints()
 	rest.Run()
