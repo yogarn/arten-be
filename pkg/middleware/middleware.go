@@ -9,6 +9,7 @@ import (
 type Interface interface {
 	AuthenticateUser(ctx *gin.Context)
 	CheckTranslationOwnership(ctx *gin.Context)
+	Logger() gin.HandlerFunc
 }
 
 type middleware struct {
