@@ -1,0 +1,14 @@
+services:
+  redis:
+    container_name: "redis"
+    image: redis:alpine
+
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+  api:
+    container_name: "arten"
+    build:
+      context: .
+    ports:
+      - "${PORT}:${PORT}"

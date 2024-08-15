@@ -16,5 +16,5 @@ func LoadDataSourceName() string {
 }
 
 func LoadRedisCredentials() (string, string) {
-	return os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASSWORD")
+	return fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")), os.Getenv("REDIS_PASSWORD")
 }
