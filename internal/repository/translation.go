@@ -12,6 +12,7 @@ import (
 type ITranslationRepository interface {
 	CreateTranslation(translation *entity.Translation) error
 	GetTranslation(id uuid.UUID) (*entity.Translation, error)
+	GetTranslationHistory(userId uuid.UUID) ([]entity.Translation, error)
 	UpdateTranslation(id uuid.UUID, translation *entity.Translation) error
 	DeleteTranslation(id uuid.UUID) error
 }
@@ -67,6 +68,37 @@ func (translationRepository *TranslationRepository) GetTranslation(id uuid.UUID)
 	}
 
 	return translation, nil
+}
+
+func (translationRepository *TranslationRepository) GetTranslationHistory(userId uuid.UUID) ([]entity.Translation, error) {
+	stmt := `
+		SELECT id, user_id, origin_language, target_language, word, translate, updated_at, created_at
+		FROM translations
+		WHERE user_id = ?
+		LIMIT 10
+	`
+
+	rows, err := translationRepository.db.Query(stmt, userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("no record found")
+		}
+		return nil, fmt.Errorf("scan row: %v", err)
+	}
+
+	defer rows.Close()
+
+	translations := []entity.Translation{}
+	for rows.Next() {
+		translation := entity.Translation{}
+		err := rows.Scan(&translation.Id, &translation.UserId, &translation.OriginLanguage, &translation.TargetLanguage, &translation.Word, &translation.Translate, &translation.UpdatedAt, &translation.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("scan row: %v", err)
+		}
+		translations = append(translations, translation)
+	}
+
+	return translations, nil
 }
 
 func (translationRepository *TranslationRepository) UpdateTranslation(id uuid.UUID, translation *entity.Translation) error {

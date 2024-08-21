@@ -40,6 +40,16 @@ func (rest *Rest) GetTranslation(ctx *gin.Context) {
 	response.Success(ctx, http.StatusOK, "Translation found", translation)
 }
 
+func (rest *Rest) GetTranslationHistory(ctx *gin.Context) {
+	translation, err := rest.service.TranslationService.GetTranslationHistory(ctx)
+	if err != nil {
+		response.Error(ctx, http.StatusNotFound, "Translation not found", err)
+		return
+	}
+
+	response.Success(ctx, http.StatusOK, "Translations found", translation)
+}
+
 func (rest *Rest) UpdateTranslation(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {

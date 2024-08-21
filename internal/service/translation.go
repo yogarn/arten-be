@@ -15,6 +15,7 @@ import (
 type ITranslationService interface {
 	CreateTranslation(ctx *gin.Context, translation *entity.Translation) error
 	GetTranslation(ctx *gin.Context, id uuid.UUID) (*entity.Translation, error)
+	GetTranslationHistory(ctx *gin.Context) ([]entity.Translation, error)
 	UpdateTranslation(ctx *gin.Context, id uuid.UUID, translation *entity.Translation) error
 	DeleteTranslation(ctx *gin.Context, id uuid.UUID) error
 }
@@ -66,6 +67,19 @@ func (translationService *TranslationService) GetTranslation(ctx *gin.Context, i
 		return nil, err
 	}
 	return translation, nil
+}
+
+func (translationService *TranslationService) GetTranslationHistory(ctx *gin.Context) ([]entity.Translation, error) {
+	userId, err := translationService.JWT.GetLoginUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	translations, err := translationService.TranslationRepository.GetTranslationHistory(userId)
+	if err != nil {
+		return nil, err
+	}
+	return translations, nil
 }
 
 // NOTE: should be removed in near future, not needed

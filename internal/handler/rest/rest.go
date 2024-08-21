@@ -42,6 +42,7 @@ func NewRest(router *gin.Engine, service *service.Service, wsManager *websocket.
 func MountTranslation(routerGroup *gin.RouterGroup, rest *Rest) {
 	translation := routerGroup.Group("/translations")
 	translation.POST("/", rest.middleware.AuthenticateUser, rest.CreateTranslation)
+	translation.GET("/", rest.middleware.AuthenticateUser, rest.GetTranslationHistory)
 	translation.GET("/:id", rest.middleware.AuthenticateUser, rest.middleware.CheckTranslationOwnership, rest.GetTranslation)
 	translation.PUT("/:id", rest.middleware.AuthenticateUser, rest.middleware.CheckTranslationOwnership, rest.UpdateTranslation)
 	translation.DELETE("/:id", rest.middleware.AuthenticateUser, rest.middleware.CheckTranslationOwnership, rest.DeleteTranslation)
