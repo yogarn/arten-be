@@ -17,6 +17,7 @@ import (
 type IUserService interface {
 	Register(userReq *model.UserRegister) (*entity.User, error)
 	Login(userReq *model.UserLogin) (*model.UserLoginResponse, error)
+	RefreshToken(token string) (string, error)
 	GetUserById(id uuid.UUID) (*entity.User, error)
 	UpdateUser(ctx *gin.Context, user *model.UpdateUser) (*model.UpdateUser, error)
 	SendOtp(username string) error
@@ -79,11 +80,31 @@ func (userService *UserService) Login(userReq *model.UserLogin) (*model.UserLogi
 		return nil, err
 	}
 
+	refreshToken, err := userService.JWT.CreateRefreshToken(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	response := &model.UserLoginResponse{
-		Username: user.Username,
-		Token:    token,
+		Username:     user.Username,
+		Token:        token,
+		RefreshToken: refreshToken,
 	}
 	return response, nil
+}
+
+func (userService *UserService) RefreshToken(token string) (string, error) {
+	userId, err := userService.JWT.ValidateRefreshToken(token)
+	if err != nil {
+		return "", err
+	}
+
+	refreshToken, err := userService.JWT.CreateRefreshToken(userId)
+	if err != nil {
+		return "", err
+	}
+
+	return refreshToken, nil
 }
 
 func (userService *UserService) GetUserById(id uuid.UUID) (*entity.User, error) {

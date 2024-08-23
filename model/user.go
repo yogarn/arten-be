@@ -12,9 +12,14 @@ type UserLogin struct {
 	Password string `json:"password" binding:"required,min=8"`
 }
 
+type RefreshToken struct {
+	Token string `json:"token" binding:"required"`
+}
+
 type UserLoginResponse struct {
-	Username string `json:"username"`
-	Token    string `json:"jwtToken"`
+	Username     string `json:"username"`
+	Token        string `json:"jwtToken"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 type UpdateUser struct {

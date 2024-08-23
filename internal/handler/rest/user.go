@@ -46,6 +46,21 @@ func (r *Rest) Login(ctx *gin.Context) {
 	response.Success(ctx, http.StatusOK, "success", user)
 }
 
+func (r *Rest) RefreshToken(ctx *gin.Context) {
+	tokenReq := &model.RefreshToken{}
+	if err := ctx.ShouldBindJSON(tokenReq); err != nil {
+		response.Error(ctx, http.StatusBadRequest, "invalid request", err)
+		return
+	}
+
+	newToken, err := r.service.UserService.RefreshToken(tokenReq.Token)
+	if err != nil {
+		response.Error(ctx, http.StatusInternalServerError, "failed to refresh token", err)
+		return
+	}
+	response.Success(ctx, http.StatusOK, "success", newToken)
+}
+
 func (r *Rest) UpdateProfile(ctx *gin.Context) {
 	var userReq model.UpdateUser
 
