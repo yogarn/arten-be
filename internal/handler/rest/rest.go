@@ -65,6 +65,7 @@ func MountUser(routerGroup *gin.RouterGroup, rest *Rest) {
 	user.POST("/register", rest.Register)
 	user.POST("/login", rest.Login)
 	user.POST("/refresh", rest.RefreshToken)
+	user.POST("/logout", rest.middleware.AuthenticateUser, rest.Logout)
 	user.POST("/otp", rest.SendOtp)
 	user.POST("/activate", rest.ActivateUser)
 	user.PATCH("", rest.middleware.AuthenticateUser, rest.UpdateProfile)
