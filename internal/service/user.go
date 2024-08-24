@@ -3,6 +3,8 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -19,9 +21,12 @@ type IUserService interface {
 	Login(userReq *model.UserLogin) (*model.UserLoginResponse, error)
 	RefreshToken(token string) (string, error)
 	GetUserById(id uuid.UUID) (*entity.User, error)
+	GetUserByUsername(username string) (*entity.User, error)
 	UpdateUser(ctx *gin.Context, user *model.UpdateUser) (*model.UpdateUser, error)
 	SendOtp(username string) error
 	ActivateUser(otpRequest *model.OtpRequest) error
+	GetIpAddress(ctx *gin.Context) string
+	GetDeviceInfo(ctx *gin.Context) string
 }
 
 type UserService struct {
@@ -46,12 +51,15 @@ func (userService *UserService) Register(userReq *model.UserRegister) (*entity.U
 		return nil, err
 	}
 	userEntity := &entity.User{
-		ID:       uuid.New(),
-		Username: userReq.Username,
-		Password: hashPassword,
-		Name:     userReq.Name,
-		Email:    userReq.Email,
+		ID:        uuid.New(),
+		Username:  userReq.Username,
+		Password:  hashPassword,
+		Name:      userReq.Name,
+		Email:     userReq.Email,
+		UpdatedAt: time.Now(),
+		CreatedAt: time.Now(),
 	}
+
 	user, err := userService.UserRepository.CreateUser(userEntity)
 	if err != nil {
 		return nil, err
@@ -115,6 +123,14 @@ func (userService *UserService) GetUserById(id uuid.UUID) (*entity.User, error) 
 	return user, nil
 }
 
+func (userService *UserService) GetUserByUsername(username string) (*entity.User, error) {
+	user, err := userService.UserRepository.GetUserByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (userService *UserService) UpdateUser(ctx *gin.Context, userReq *model.UpdateUser) (*model.UpdateUser, error) {
 	userId, err := userService.JWT.GetLoginUser(ctx)
 	if err != nil {
@@ -167,4 +183,19 @@ func (userService *UserService) ActivateUser(otpRequest *model.OtpRequest) error
 	}
 
 	return nil
+}
+
+func (userService *UserService) GetIpAddress(ctx *gin.Context) string {
+	ip := ctx.GetHeader("X-Forwarded-For")
+	if ip == "" {
+		ip = ctx.ClientIP()
+	} else {
+		ips := strings.Split(ip, ",")
+		ip = strings.TrimSpace(ips[0])
+	}
+	return ip
+}
+
+func (userService *UserService) GetDeviceInfo(ctx *gin.Context) string {
+	return ctx.GetHeader("User-Agent")
 }

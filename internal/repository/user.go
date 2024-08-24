@@ -19,6 +19,7 @@ type IUserRepository interface {
 	CreateUser(user *entity.User) (*entity.User, error)
 	LoginUser(user *model.UserLogin) (*entity.User, error)
 	GetUserById(id uuid.UUID) (*entity.User, error)
+	GetUserByUsername(username string) (*entity.User, error)
 	UpdateUser(id uuid.UUID, userReq *model.UpdateUser) (*model.UpdateUser, error)
 	SendOtp(username string) (*entity.User, string, error)
 	CheckOtp(otpRequest *model.OtpRequest) error
@@ -38,15 +39,15 @@ func NewUserRepository(db *sql.DB, redis *redis.Client) IUserRepository {
 }
 
 func (userRepository *UserRepository) CreateUser(user *entity.User) (*entity.User, error) {
-	stmt := `INSERT INTO users (id, name, username, password, email, is_verified, created_at) 
-	VALUES (?, ?, ?, ?, ?, FALSE, UTC_TIMESTAMP())`
+	stmt := `INSERT INTO users (id, name, username, password, email, is_verified, updated_at, created_at) 
+	VALUES (?, ?, ?, ?, ?, FALSE, ?, ?)`
 
 	tx, err := userRepository.db.Begin()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = tx.Exec(stmt, user.ID, user.Name, user.Username, user.Password, user.Email)
+	_, err = tx.Exec(stmt, user.ID, user.Name, user.Username, user.Password, user.Email, user.UpdatedAt, user.CreatedAt)
 	if err != nil {
 		tx.Rollback()
 		return user, err
@@ -66,7 +67,7 @@ func (userRepository *UserRepository) SendOtp(username string) (*entity.User, st
 	user := &entity.User{}
 
 	row := tx.QueryRow(stmt, username)
-	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.CreatedAt)
+	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.UpdatedAt, &user.CreatedAt)
 
 	if err != nil {
 		return nil, "", err
@@ -93,7 +94,7 @@ func (userRepository *UserRepository) CheckOtp(otpRequest *model.OtpRequest) err
 	user := &entity.User{}
 
 	row := tx.QueryRow(stmt, otpRequest.Username)
-	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.CreatedAt)
+	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.UpdatedAt, &user.CreatedAt)
 
 	if err != nil {
 		return err
@@ -117,14 +118,14 @@ func (userRepository *UserRepository) CheckOtp(otpRequest *model.OtpRequest) err
 }
 
 func (userRepository *UserRepository) ActivateUser(username string) error {
-	stmt := "UPDATE users SET is_verified = TRUE WHERE username = ?"
+	stmt := "UPDATE users SET is_verified = TRUE, updated_at = ? WHERE username = ?"
 
 	tx, err := userRepository.db.Begin()
 	if err != nil {
 		return err
 	}
 
-	result, err := tx.Exec(stmt, username)
+	result, err := tx.Exec(stmt, time.Now(), username)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -155,7 +156,7 @@ func (userRepository *UserRepository) LoginUser(userReq *model.UserLogin) (*enti
 	user := &entity.User{}
 
 	row := tx.QueryRow(stmt, userReq.Username)
-	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.CreatedAt)
+	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.UpdatedAt, &user.CreatedAt)
 
 	if !user.IsVerified {
 		return nil, errors.New("user not verified")
@@ -180,7 +181,28 @@ func (userRepository *UserRepository) GetUserById(id uuid.UUID) (*entity.User, e
 	user := &entity.User{}
 
 	row := tx.QueryRow(stmt, id)
-	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.CreatedAt)
+	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.UpdatedAt, &user.CreatedAt)
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	return user, err
+}
+
+func (userRepository *UserRepository) GetUserByUsername(username string) (*entity.User, error) {
+	stmt := `SELECT * FROM users WHERE username = ?`
+	tx, err := userRepository.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	user := &entity.User{}
+
+	row := tx.QueryRow(stmt, username)
+	err = row.Scan(&user.ID, &user.Name, &user.Username, &user.Password, &user.Email, &user.IsVerified, &user.UpdatedAt, &user.CreatedAt)
 
 	if err != nil {
 		tx.Rollback()
@@ -211,6 +233,9 @@ func (userRepository *UserRepository) UpdateUser(id uuid.UUID, userReq *model.Up
 		column = append(column, "email = ?")
 		values = append(values, userReq.Email)
 	}
+
+	column = append(column, "updated_at = ?")
+	values = append(values, time.Now())
 
 	values = append(values, id)
 

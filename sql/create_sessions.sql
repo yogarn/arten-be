@@ -5,7 +5,6 @@ CREATE TABLE sessions (
     device_info TEXT,
     ip_address VARCHAR(45),
 
-    updated_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

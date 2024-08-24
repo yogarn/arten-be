@@ -42,7 +42,6 @@ func (translationService *TranslationService) CreateTranslation(ctx *gin.Context
 	}
 
 	translation.CreatedAt = time.Now()
-	translation.UpdatedAt = time.Now()
 
 	userId, err := translationService.JWT.GetLoginUser(ctx)
 	if err != nil {
