@@ -72,6 +72,12 @@ func MountUser(routerGroup *gin.RouterGroup, rest *Rest) {
 	user.GET("", rest.middleware.AuthenticateUser, rest.GetLoginUser)
 }
 
+func MountTranscribe(routerGroup *gin.RouterGroup, rest *Rest) {
+	transcribe := routerGroup.Group("/transcribe")
+	transcribe.POST("/id", rest.IndonesianTranscribe)
+	transcribe.POST("/en", rest.EnglishTranscribe)
+}
+
 func (rest *Rest) MountEndpoints() {
 	rest.router.NoRoute(func(ctx *gin.Context) {
 		response.Error(ctx, http.StatusNotFound, "not found", errors.New("page not found"))
@@ -81,6 +87,7 @@ func (rest *Rest) MountEndpoints() {
 	MountTranslation(routerGroup, rest)
 	MountWebsocket(routerGroup, rest)
 	MountUser(routerGroup, rest)
+	MountTranscribe(routerGroup, rest)
 }
 
 func (rest *Rest) Run() {

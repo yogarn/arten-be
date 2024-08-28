@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/yogarn/arten/internal/handler/rest"
 	"github.com/yogarn/arten/internal/handler/websocket"
@@ -10,6 +12,7 @@ import (
 	"github.com/yogarn/arten/pkg/config"
 	"github.com/yogarn/arten/pkg/database/mysql"
 	"github.com/yogarn/arten/pkg/database/redis"
+	"github.com/yogarn/arten/pkg/grpc"
 	"github.com/yogarn/arten/pkg/jwt"
 	"github.com/yogarn/arten/pkg/middleware"
 	"github.com/yogarn/arten/pkg/smtp"
@@ -17,6 +20,13 @@ import (
 
 func main() {
 	config.LoadEnvironment()
+
+	grpcConn, err := grpc.NewClientConn()
+	if err != nil {
+		log.Fatalf("Failed to create gRPC client: %v", err)
+	}
+	defer grpcConn.Close()
+
 	db := mysql.ConnectDatabase()
 	defer db.Close()
 
@@ -31,7 +41,7 @@ func main() {
 	bcrypt := bcrypt.Init()
 
 	repository := repository.NewRepository(db, redis)
-	service := service.NewService(repository, bcrypt, jwt, smtp)
+	service := service.NewService(repository, bcrypt, jwt, smtp, grpcConn)
 	middleware := middleware.Init(jwt, service)
 
 	config.SetupLogger()
