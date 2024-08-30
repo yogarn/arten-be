@@ -40,12 +40,18 @@ func NewRest(router *gin.Engine, service *service.Service, wsManager *websocket.
 }
 
 func MountTranslation(routerGroup *gin.RouterGroup, rest *Rest) {
-	translation := routerGroup.Group("/translations")
+	translation := routerGroup.Group("/translate")
 	translation.POST("/", rest.middleware.AuthenticateUser, rest.CreateTranslation)
 	translation.GET("/", rest.middleware.AuthenticateUser, rest.GetTranslationHistory)
 	translation.GET("/:id", rest.middleware.AuthenticateUser, rest.middleware.CheckTranslationOwnership, rest.GetTranslation)
 	translation.PUT("/:id", rest.middleware.AuthenticateUser, rest.middleware.CheckTranslationOwnership, rest.UpdateTranslation)
 	translation.DELETE("/:id", rest.middleware.AuthenticateUser, rest.middleware.CheckTranslationOwnership, rest.DeleteTranslation)
+}
+
+func MountTranscribeAndTranslate(routerGroup *gin.RouterGroup, rest *Rest) {
+	translation := routerGroup.Group("/transcribe-translate")
+	translation.POST("/en", rest.middleware.AuthenticateUser, rest.EnglishTranscribeAndTranslate)
+	translation.POST("/id", rest.middleware.AuthenticateUser, rest.IndonesianTranscribeAndTranslate)
 }
 
 func MountWebsocket(routerGroup *gin.RouterGroup, rest *Rest) {
@@ -88,6 +94,7 @@ func (rest *Rest) MountEndpoints() {
 	MountWebsocket(routerGroup, rest)
 	MountUser(routerGroup, rest)
 	MountTranscribe(routerGroup, rest)
+	MountTranscribeAndTranslate(routerGroup, rest)
 }
 
 func (rest *Rest) Run() {

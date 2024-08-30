@@ -24,6 +24,62 @@ func (rest *Rest) CreateTranslation(ctx *gin.Context) {
 	response.Success(ctx, http.StatusCreated, "Translation created", translation)
 }
 
+func (rest *Rest) EnglishTranscribeAndTranslate(ctx *gin.Context) {
+	file, _, err := ctx.Request.FormFile("file")
+	if err != nil {
+		response.Error(ctx, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	transcribeResponse, err := rest.service.TranscribeService.TranscribeEnglish(ctx, file)
+	if err != nil {
+		response.Error(ctx, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	translation := &entity.Translation{
+		OriginLanguage: "en",
+		TargetLanguage: "id",
+		Word:           transcribeResponse.TranscriptionMessage,
+	}
+
+	err = rest.service.TranslationService.CreateTranslation(ctx, translation)
+	if err != nil {
+		response.Error(ctx, http.StatusInternalServerError, "Failed to create translation", err)
+		return
+	}
+
+	response.Success(ctx, http.StatusCreated, "Translation created", translation)
+}
+
+func (rest *Rest) IndonesianTranscribeAndTranslate(ctx *gin.Context) {
+	file, _, err := ctx.Request.FormFile("file")
+	if err != nil {
+		response.Error(ctx, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	transcribeResponse, err := rest.service.TranscribeService.TranscribeIndonesian(ctx, file)
+	if err != nil {
+		response.Error(ctx, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	translation := &entity.Translation{
+		OriginLanguage: "id",
+		TargetLanguage: "en",
+		Word:           transcribeResponse.TranscriptionMessage,
+	}
+
+	err = rest.service.TranslationService.CreateTranslation(ctx, translation)
+	if err != nil {
+		response.Error(ctx, http.StatusInternalServerError, "Failed to create translation", err)
+		return
+	}
+
+	response.Success(ctx, http.StatusCreated, "Translation created", translation)
+}
+
 func (rest *Rest) GetTranslation(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
