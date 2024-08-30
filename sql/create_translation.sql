@@ -4,7 +4,7 @@ CREATE TABLE translations (
     origin_language VARCHAR(255) NOT NULL,
     target_language VARCHAR(255) NOT NULL,
     word TEXT NOT NULL,
-    translate VARCHAR(255) NOT NULL,
+    translate TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
