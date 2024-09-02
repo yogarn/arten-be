@@ -6,6 +6,7 @@ Arten is a voice recognition and AI based translation application using DeepL. T
 - MySQL
 - DeepL
 - Redis
+- gRPC
 - Docker Compose
 
 ## Others
