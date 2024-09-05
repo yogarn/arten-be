@@ -9,6 +9,11 @@ Arten is a voice recognition and AI based translation application using DeepL. T
 - gRPC
 - Docker Compose
 
+## Features
+- Text-to-text translations
+- Voice-to-text translations
+- Voice-to-text transcriptions
+
 ## Others
 Front-end Repository: https://github.com/meouz/arten-fe  
 Jupyter Notebook Repository: https://github.com/tonimurfid/ASR_Arten  
